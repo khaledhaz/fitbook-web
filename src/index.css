@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    background-color: #09111A;
+    color: #F5F7FA;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  #root {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: #09111A; }
+  ::-webkit-scrollbar-thumb { background: #1F2D47; border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: #2C3A56; }
+
+  /* Focus visible */
+  :focus-visible {
+    outline: 2px solid #F0B51D;
+    outline-offset: 2px;
+  }
+
+  /* Remove default focus for mouse users */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+}
+
+@layer components {
+  .page-container {
+    @apply flex-1 p-4 md:p-6 max-w-screen-xl mx-auto w-full;
+  }
+}
