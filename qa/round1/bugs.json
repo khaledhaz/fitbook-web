@@ -1,0 +1,34 @@
+{
+  "bugs": [
+    {
+      "id": 1,
+      "severity": "MED",
+      "route_or_component": "/workout/session",
+      "symptom": "Session did not start — timer or Complete Workout button not shown",
+      "evidence": "Text after start: \"FitBook\nHome\nSchedule\nProgress\nChat\nProfile\nS\n\nsaqr@gmail.com\n\nTrainee\n\nWorkout Session\nStart Session\n\ndumbbell bench press\n\n0/4 sets completed\n\nSet\nWeight\nReps\nRPE\nDone\n1\n2\n3\n4\n\ndumbbell incline benc\"",
+      "area": "trainee"
+    },
+    {
+      "id": 2,
+      "severity": "HIGH",
+      "route_or_component": "/workout/session",
+      "symptom": "Network failure during workout session start: HTTP 400",
+      "evidence": "URL: https://vaywkjksblafjgduecip.supabase.co/rest/v1/workout_sessions?select=* | Body: {\"code\":\"23502\",\"details\":null,\"hint\":null,\"message\":\"null value in column \\\"workout_plan_id\\\" of relation \\\"workout_sessions\\\" violates not-null cons",
+      "area": "trainee"
+    },
+    {
+      "id": 3,
+      "severity": "MED",
+      "route_or_component": "/workout/session",
+      "symptom": "Error during workout session interaction",
+      "evidence": "locator.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('input[aria-label*=\"weight\"]').first()\n    - locator resolved to <input min=\"0\" disabled value=\"\" step=\"0.5\" type=\"number\" pla",
+      "area": "trainee"
+    }
+  ],
+  "summary": {
+    "total": 3,
+    "high": 1,
+    "med": 2,
+    "low": 0
+  }
+}

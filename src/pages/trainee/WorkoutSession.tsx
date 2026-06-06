@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { CheckCircle2, Circle, ChevronDown, ChevronUp, Timer, X } from 'lucide-react'
 import { useAuth } from '../../lib/auth'
+import { supabase } from '../../lib/supabase'
 import {
   useWorkoutDayExercises,
   useCreateWorkoutSession,
@@ -97,8 +98,16 @@ export function TraineeWorkoutSessionPage() {
   const handleStartSession = async () => {
     if (!user?.id || !dayId) return
     try {
+      // Fetch workout_plan_id from workout_days (NOT NULL constraint requires it)
+      const { data: dayRow, error: dayErr } = await supabase
+        .from('workout_days')
+        .select('workout_plan_id')
+        .eq('id', dayId)
+        .single()
+      if (dayErr) throw dayErr
       const session = await createSession.mutateAsync({
         trainee_id: user.id,
+        workout_plan_id: dayRow.workout_plan_id,
         workout_day_id: dayId,
         started_at: new Date().toISOString(),
       })

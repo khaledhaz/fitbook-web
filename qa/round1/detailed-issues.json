@@ -1,0 +1,23 @@
+[
+  {
+    "severity": "HIGH",
+    "route_or_component": "/workout/session",
+    "symptom": "workout_sessions INSERT fails: HTTP 400 — missing workout_plan_id",
+    "evidence": "https://vaywkjksblafjgduecip.supabase.co/rest/v1/workout_sessions?select=* — {\"code\":\"23502\",\"details\":null,\"hint\":null,\"message\":\"null value in column \\\"workout_plan_id\\\" of relation \\\"workout_sessions\\\" violates not-null constraint\"}",
+    "area": "trainee"
+  },
+  {
+    "severity": "HIGH",
+    "route_or_component": "/workout/session",
+    "symptom": "Session fails to start — \"Complete Workout\" and timer not visible after clicking \"Start Session\"",
+    "evidence": "Network POST to workout_sessions returns 400 (null workout_plan_id not-null constraint). Text: \"FitBook\nHome\nSchedule\nProgress\nChat\nProfile\nS\n\nsaqr@gmail.com\n\nTrainee\n\nWorkout Session\nStart Session\n\ndumbbell bench press\n\n0/4 sets completed\n\nSet\nWeight\nReps\nRPE\nDone\n1\n2\n3\n4\n\ndumbbell incline benc\"",
+    "area": "trainee"
+  },
+  {
+    "severity": "MED",
+    "route_or_component": "/progress",
+    "symptom": "Horizontal overflow at 375px viewport",
+    "evidence": "scrollWidth=914, innerWidth=375, overflow=+539px",
+    "area": "trainee"
+  }
+]

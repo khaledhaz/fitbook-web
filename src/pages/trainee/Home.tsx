@@ -23,6 +23,10 @@ export function TraineeHomePage() {
   const navigate = useNavigate()
   const { user } = useAuth()
 
+  // Load current user profile for display_name / avatar
+  const currentUserQ = useUser(user?.id)
+  const currentUserProfile = currentUserQ.data
+
   // Load trainee row to get trainer_id
   const traineeQ = useTrainee(user?.id)
   const trainee = traineeQ.data
@@ -59,10 +63,10 @@ export function TraineeHomePage() {
         <div>
           <p className="text-text-secondary text-sm">{greeting()}</p>
           <h1 className="text-2xl font-bold text-text">
-            {user?.email?.split('@')[0] ?? 'Athlete'} 💪
+            {currentUserProfile?.display_name ?? user?.email?.split('@')[0] ?? 'Athlete'} 💪
           </h1>
         </div>
-        <Avatar src={null} name={user?.email} size="md" />
+        <Avatar src={currentUserProfile?.photo_url ?? null} name={currentUserProfile?.display_name ?? user?.email} size="md" />
       </div>
 
       <div className="flex flex-col gap-4">

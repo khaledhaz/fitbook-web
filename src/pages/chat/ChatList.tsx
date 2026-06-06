@@ -11,6 +11,7 @@ import { Avatar } from '../../components/ui/Avatar'
 import { Skeleton } from '../../components/ui/Spinner'
 import { EmptyState, ErrorState } from '../../components/ui/States'
 import { formatTimestamp } from './_shared/chatHelpers'
+import { supabase } from '../../lib/supabase'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -199,18 +200,16 @@ export function ChatListPage({ roleContext: _roleContext }: ChatListPageProps) {
     if (!conversationIds.length || !user?.id) return
     let cancelled = false
 
-    import('../../lib/supabase').then(({ supabase }) => {
-      supabase
-        .from('conversation_participants')
-        .select('conversation_id, last_read_at, is_muted, users(id, display_name, photo_url, username)')
-        .in('conversation_id', conversationIds)
-        .neq('user_id', user.id)
-        .then(({ data }) => {
-          if (!cancelled && data) {
-            setAllParticipants(data as unknown as ConversationRow[])
-          }
-        })
-    })
+    supabase
+      .from('conversation_participants')
+      .select('conversation_id, last_read_at, is_muted, users(id, display_name, photo_url, username)')
+      .in('conversation_id', conversationIds)
+      .neq('user_id', user.id)
+      .then(({ data }) => {
+        if (!cancelled && data) {
+          setAllParticipants(data as unknown as ConversationRow[])
+        }
+      })
 
     return () => {
       cancelled = true

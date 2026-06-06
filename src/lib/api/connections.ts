@@ -35,7 +35,7 @@ export function useOutgoingConnectionRequests(userId: string | undefined) {
         .eq('sender_id', userId!)
         .order('created_at', { ascending: false })
       if (error) throw error
-      return data as ConnectionRequest[]
+      return data as (ConnectionRequest & { users: { id: string; display_name: string | null; photo_url: string | null; username: string | null } | null })[]
     },
   })
 }

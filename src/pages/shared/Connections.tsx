@@ -229,33 +229,42 @@ export function ConnectionsPage() {
           />
         ) : (
           <ul className="flex flex-col gap-3" aria-label="Outgoing connection requests">
-            {outgoingQ.data.map((req) => (
-              <li key={req.id}>
-                <Card className="flex items-center gap-3 min-w-0">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-text truncate">
-                      Request #{req.id.slice(0, 8)}
-                    </p>
-                    <p className="text-xs text-text-tertiary mt-0.5 flex items-center gap-1">
-                      <Clock className="w-3 h-3" aria-hidden="true" />
-                      {formatRelativeDate(req.created_at)}
-                    </p>
-                  </div>
-                  <StatusBadge status={req.status} />
-                  {req.status === 'pending' && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      aria-label="Cancel this request"
-                      onClick={() => handleCancel(req.id)}
-                      isLoading={cancel.isPending}
-                    >
-                      <X className="w-4 h-4 text-text-tertiary" aria-hidden="true" />
-                    </Button>
-                  )}
-                </Card>
-              </li>
-            ))}
+            {outgoingQ.data.map((req) => {
+              const receiver = (req as unknown as { users: { id: string; display_name: string | null; photo_url: string | null; username: string | null } | null }).users
+              const recipientName = receiver?.display_name ?? receiver?.username ?? `Request #${req.id.slice(0, 8)}`
+              return (
+                <li key={req.id}>
+                  <Card className="flex items-center gap-3 min-w-0">
+                    <Avatar
+                      src={receiver?.photo_url ?? null}
+                      name={receiver?.display_name ?? receiver?.username ?? undefined}
+                      size="md"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-text truncate">
+                        {recipientName}
+                      </p>
+                      <p className="text-xs text-text-tertiary mt-0.5 flex items-center gap-1">
+                        <Clock className="w-3 h-3" aria-hidden="true" />
+                        {formatRelativeDate(req.created_at)}
+                      </p>
+                    </div>
+                    <StatusBadge status={req.status} />
+                    {req.status === 'pending' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        aria-label={`Cancel request to ${recipientName}`}
+                        onClick={() => handleCancel(req.id)}
+                        isLoading={cancel.isPending}
+                      >
+                        <X className="w-4 h-4 text-text-tertiary" aria-hidden="true" />
+                      </Button>
+                    )}
+                  </Card>
+                </li>
+              )
+            })}
           </ul>
         )}
       </div>

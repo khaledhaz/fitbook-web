@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Dumbbell,
@@ -7,7 +7,7 @@ import {
   ChevronLeft,
 } from 'lucide-react'
 import { useAuth } from '../../lib/auth'
-import { useUpsertVitals } from '../../lib/api/users'
+import { useUpsertVitals, useTrainee } from '../../lib/api/users'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { useToast } from '../../components/ui/Toast'
@@ -72,6 +72,14 @@ export function VitalsOnboardingPage() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const upsertVitals = useUpsertVitals()
+  const traineeQ = useTrainee(user?.id)
+
+  // Redirect if trainee already has vitals (vital_id is NOT NULL)
+  useEffect(() => {
+    if (traineeQ.data?.vital_id) {
+      navigate('/home', { replace: true })
+    }
+  }, [traineeQ.data, navigate])
 
   const [stepIndex, setStepIndex] = useState(0)
   const [form, setForm] = useState<VitalsForm>(initialForm)

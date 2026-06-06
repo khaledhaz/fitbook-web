@@ -22,16 +22,46 @@ import { colors } from '../../theme'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+// Actual RPC response shape from get_trainee_exercise_progress
+interface RpcSet {
+  rpe: number | null
+  reps: number | null
+  weight: number | null
+  set_index: number
+  is_completed: boolean
+}
+
+interface RpcLog {
+  session_id: string
+  date: string
+  sets: RpcSet[]
+}
+
+interface RpcExercise {
+  exercise_id?: string | null
+  custom_name?: string | null
+  name?: string | null
+  logs: RpcLog[]
+}
+
+interface RpcDay {
+  day_id: string
+  plan_id: string
+  day_type: string | null
+  day_index: number
+  day_title: string | null
+  exercises: RpcExercise[]
+}
+
+interface RpcProgressResponse {
+  days: RpcDay[]
+}
+
+// Flattened structure used by the UI
 interface ExerciseProgressEntry {
-  exercise_id: string
+  exercise_key: string   // exercise_id or a stable generated key
   exercise_name: string
-  sessions: {
-    session_date: string
-    max_weight: number | null
-    total_volume: number | null
-    avg_rpe: number | null
-    sets_completed: number
-  }[]
+  logs: RpcLog[]
 }
 
 // ─── Main page ────────────────────────────────────────────────────────────────
@@ -72,7 +102,7 @@ export function TraineeProgressPage() {
 
       {/* Exercise charts */}
       <ExerciseProgressSection
-        data={progressQ.data as ExerciseProgressEntry[] | undefined}
+        rawData={progressQ.data as RpcProgressResponse | undefined}
         isLoading={progressQ.isLoading}
         isError={progressQ.isError}
         onRetry={() => progressQ.refetch()}
@@ -196,13 +226,35 @@ function BodyWeightSection({
 
 // ─── Exercise progress section ────────────────────────────────────────────────
 
+/** Estimated 1-rep max using Epley formula: weight * (1 + reps/30) */
+function epley1RM(weight: number, reps: number): number {
+  return Math.round(weight * (1 + reps / 30))
+}
+
+function flattenExercises(rawData: RpcProgressResponse | undefined): ExerciseProgressEntry[] {
+  if (!rawData?.days) return []
+  const map = new Map<string, ExerciseProgressEntry>()
+  for (const day of rawData.days) {
+    for (const ex of day.exercises ?? []) {
+      const key = ex.exercise_id ?? ex.custom_name ?? ex.name ?? 'unknown'
+      const name = ex.custom_name ?? ex.name ?? ex.exercise_id ?? 'Exercise'
+      if (!map.has(key)) {
+        map.set(key, { exercise_key: key, exercise_name: name, logs: [] })
+      }
+      const entry = map.get(key)!
+      entry.logs.push(...(ex.logs ?? []))
+    }
+  }
+  return Array.from(map.values()).filter((e) => e.logs.length > 0)
+}
+
 function ExerciseProgressSection({
-  data,
+  rawData,
   isLoading,
   isError,
   onRetry,
 }: {
-  data: ExerciseProgressEntry[] | undefined
+  rawData: RpcProgressResponse | undefined
   isLoading: boolean
   isError: boolean
   onRetry: () => void
@@ -231,7 +283,8 @@ function ExerciseProgressSection({
     )
   }
 
-  const exercises = data ?? []
+  const exercises = flattenExercises(rawData)
+
   if (!exercises.length) {
     return (
       <Card>
@@ -248,17 +301,32 @@ function ExerciseProgressSection({
     )
   }
 
-  const active = selectedExercise ?? exercises[0]?.exercise_id
-  const activeEntry = exercises.find((e) => e.exercise_id === active)
+  const active = selectedExercise ?? exercises[0]?.exercise_key
+  const activeEntry = exercises.find((e) => e.exercise_key === active)
 
-  const chartData = (activeEntry?.sessions ?? [])
-    .sort((a, b) => new Date(a.session_date).getTime() - new Date(b.session_date).getTime())
-    .map((s) => ({
-      date: new Date(s.session_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
-      maxWeight: s.max_weight,
-      volume: s.total_volume,
-      rpe: s.avg_rpe,
-    }))
+  // Build chart data: one point per session log — top-set weight and estimated 1RM
+  const chartData = [...(activeEntry?.logs ?? [])]
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .map((log) => {
+      const completedSets = (log.sets ?? []).filter(
+        (s) => s.is_completed && s.weight != null && s.reps != null,
+      )
+      const topSet = completedSets.reduce<RpcSet | null>((best, s) => {
+        if (!best) return s
+        return (s.weight ?? 0) > (best.weight ?? 0) ? s : best
+      }, null)
+      const maxWeight = topSet?.weight ?? null
+      const est1RM =
+        topSet?.weight != null && topSet?.reps != null
+          ? epley1RM(topSet.weight, topSet.reps)
+          : null
+      return {
+        date: new Date(log.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+        maxWeight,
+        est1RM,
+      }
+    })
+    .filter((d) => d.maxWeight != null || d.est1RM != null)
 
   return (
     <Card>
@@ -271,16 +339,16 @@ function ExerciseProgressSection({
       <div className="flex gap-2 overflow-x-auto pb-2 mb-4 -mx-1 px-1">
         {exercises.map((ex) => (
           <button
-            key={ex.exercise_id}
-            onClick={() => setSelectedExercise(ex.exercise_id)}
+            key={ex.exercise_key}
+            onClick={() => setSelectedExercise(ex.exercise_key)}
             className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary min-h-[36px]"
             style={{
               backgroundColor:
-                active === ex.exercise_id ? `${colors.primary}20` : colors.cardElevated,
-              color: active === ex.exercise_id ? colors.primary : colors.textSecondary,
-              border: `1px solid ${active === ex.exercise_id ? colors.primary : colors.border}`,
+                active === ex.exercise_key ? `${colors.primary}20` : colors.cardElevated,
+              color: active === ex.exercise_key ? colors.primary : colors.textSecondary,
+              border: `1px solid ${active === ex.exercise_key ? colors.primary : colors.border}`,
             }}
-            aria-pressed={active === ex.exercise_id}
+            aria-pressed={active === ex.exercise_key}
           >
             {ex.exercise_name}
           </button>
@@ -289,7 +357,7 @@ function ExerciseProgressSection({
 
       {/* Chart */}
       {chartData.length === 0 ? (
-        <p className="text-sm text-text-tertiary text-center py-6">No sessions recorded.</p>
+        <p className="text-sm text-text-tertiary text-center py-6">No completed sets recorded.</p>
       ) : (
         <div className="h-52 w-full min-w-0">
           <ResponsiveContainer width="100%" height="100%">
@@ -322,20 +390,22 @@ function ExerciseProgressSection({
               <Line
                 type="monotone"
                 dataKey="maxWeight"
-                name="Max Weight (kg)"
+                name="Top Set (kg)"
                 stroke={colors.primary}
                 strokeWidth={2}
                 dot={{ r: 3, fill: colors.primary }}
                 activeDot={{ r: 5 }}
+                connectNulls
               />
               <Line
                 type="monotone"
-                dataKey="volume"
-                name="Volume (kg)"
+                dataKey="est1RM"
+                name="Est. 1RM (kg)"
                 stroke={colors.macroCarbs}
                 strokeWidth={2}
                 dot={{ r: 3, fill: colors.macroCarbs }}
                 activeDot={{ r: 5 }}
+                connectNulls
               />
             </LineChart>
           </ResponsiveContainer>

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { cn } from '../../utils/cn'
 import { useAuth } from '../../lib/auth'
+import { useUser } from '../../lib/api/users'
 import { Avatar } from '../ui/Avatar'
 
 interface NavItem {
@@ -32,7 +33,7 @@ const TRAINER_NAV: NavItem[] = [
   { to: '/trainer/home', icon: Home, label: 'Home' },
   { to: '/trainer/trainees', icon: Users, label: 'Trainees' },
   { to: '/trainer/templates', icon: FileText, label: 'Templates' },
-  { to: '/chats', icon: MessageSquare, label: 'Chat' },
+  { to: '/trainer/chats', icon: MessageSquare, label: 'Chat' },
   { to: '/trainer/profile', icon: User, label: 'Profile' },
 ]
 
@@ -43,6 +44,8 @@ interface AppShellProps {
 export function AppShell({ children }: AppShellProps) {
   const { role, user } = useAuth()
   const navItems = role === 'trainer' ? TRAINER_NAV : TRAINEE_NAV
+  const profileQ = useUser(user?.id ?? undefined)
+  const profileUser = profileQ.data
 
   return (
     <div className="flex min-h-dvh bg-bg">
@@ -70,9 +73,11 @@ export function AppShell({ children }: AppShellProps) {
             to={role === 'trainer' ? '/trainer/profile' : '/profile'}
             className="flex items-center gap-3 p-2 rounded-lg hover:bg-card transition-colors"
           >
-            <Avatar src={null} name={user?.email} size="sm" />
+            <Avatar src={profileUser?.photo_url ?? null} name={profileUser?.display_name ?? user?.email} size="sm" />
             <div className="min-w-0">
-              <p className="text-sm font-medium text-text truncate">{user?.email}</p>
+              <p className="text-sm font-medium text-text truncate">
+                {profileUser?.display_name ?? user?.email ?? ''}
+              </p>
               <p className="text-xs text-text-tertiary capitalize">{role}</p>
             </div>
           </NavLink>
