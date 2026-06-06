@@ -11,9 +11,11 @@ import {
   Tooltip,
   Legend,
 } from 'recharts'
+import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../lib/auth'
 import { useTraineeExerciseProgress } from '../../lib/api/workouts'
 import { useBodyMeasurements } from '../../lib/api/measurements'
+import { supabase } from '../../lib/supabase'
 import { Card, CardHeader, CardTitle } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { PageSpinner, Skeleton } from '../../components/ui/Spinner'
@@ -62,6 +64,29 @@ interface ExerciseProgressEntry {
   exercise_key: string   // exercise_id or a stable generated key
   exercise_name: string
   logs: RpcLog[]
+}
+
+// ─── Exercise name resolver ───────────────────────────────────────────────────
+
+/** Returns a map of exercise_id → human-readable name for a set of ids. */
+function useExerciseNames(ids: string[]) {
+  return useQuery({
+    queryKey: ['exercise_names', ...ids.slice().sort()],
+    enabled: ids.length > 0,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('exercises')
+        .select('id, name')
+        .in('id', ids)
+      if (error) throw error
+      const map = new Map<string, string>()
+      for (const row of data ?? []) {
+        if (row.id && row.name) map.set(row.id, row.name)
+      }
+      return map
+    },
+  })
 }
 
 // ─── Main page ────────────────────────────────────────────────────────────────
@@ -231,13 +256,21 @@ function epley1RM(weight: number, reps: number): number {
   return Math.round(weight * (1 + reps / 30))
 }
 
-function flattenExercises(rawData: RpcProgressResponse | undefined): ExerciseProgressEntry[] {
+function flattenExercises(
+  rawData: RpcProgressResponse | undefined,
+  nameMap: Map<string, string>,
+): ExerciseProgressEntry[] {
   if (!rawData?.days) return []
   const map = new Map<string, ExerciseProgressEntry>()
   for (const day of rawData.days) {
     for (const ex of day.exercises ?? []) {
       const key = ex.exercise_id ?? ex.custom_name ?? ex.name ?? 'unknown'
-      const name = ex.custom_name ?? ex.name ?? ex.exercise_id ?? 'Exercise'
+      // Priority: custom_name → RPC name → resolved exercises table name → friendly fallback
+      const name =
+        ex.custom_name ??
+        (ex.name && ex.name !== ex.exercise_id ? ex.name : null) ??
+        (ex.exercise_id ? nameMap.get(ex.exercise_id) : undefined) ??
+        'Exercise'
       if (!map.has(key)) {
         map.set(key, { exercise_key: key, exercise_name: name, logs: [] })
       }
@@ -261,6 +294,22 @@ function ExerciseProgressSection({
 }) {
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null)
 
+  // Collect all exercise_ids that look like UUIDs so we can resolve their names
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  const exerciseIds = React.useMemo(() => {
+    if (!rawData?.days) return []
+    const ids = new Set<string>()
+    for (const day of rawData.days) {
+      for (const ex of day.exercises ?? []) {
+        if (ex.exercise_id && UUID_RE.test(ex.exercise_id)) ids.add(ex.exercise_id)
+      }
+    }
+    return Array.from(ids)
+  }, [rawData])
+
+  const namesQ = useExerciseNames(exerciseIds)
+  const nameMap = namesQ.data ?? new Map<string, string>()
+
   if (isLoading) {
     return (
       <Card>
@@ -283,7 +332,7 @@ function ExerciseProgressSection({
     )
   }
 
-  const exercises = flattenExercises(rawData)
+  const exercises = flattenExercises(rawData, nameMap)
 
   if (!exercises.length) {
     return (

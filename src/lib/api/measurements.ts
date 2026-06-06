@@ -59,3 +59,19 @@ export function useUpdateBodyMeasurement() {
     },
   })
 }
+
+export function useDeleteBodyMeasurement(userId: string | undefined) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('body_measurements')
+        .delete()
+        .eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: measurementKeys.all(userId ?? '') })
+    },
+  })
+}

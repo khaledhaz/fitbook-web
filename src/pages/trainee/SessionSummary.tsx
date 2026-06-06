@@ -76,11 +76,11 @@ export function TraineeSessionSummaryPage() {
     (sum, s) => sum + (s.weight ?? 0) * (s.reps ?? 0),
     0
   )
-  const duration = session.completed_at
-    ? Math.round(
-        (new Date(session.completed_at).getTime() - new Date(session.started_at).getTime()) / 60000
-      )
+  const durationMs = session.completed_at
+    ? new Date(session.completed_at).getTime() - new Date(session.started_at).getTime()
     : null
+  const durationMin = durationMs != null ? Math.floor(durationMs / 60000) : null
+  const durationDisplay = durationMs == null ? null : durationMin === 0 ? '<1' : String(durationMin)
 
   return (
     <div className="page-container max-w-2xl mx-auto">
@@ -121,8 +121,8 @@ export function TraineeSessionSummaryPage() {
           />
           <StatItem
             label="Duration"
-            value={duration != null ? `${duration}` : '—'}
-            sub="min"
+            value={durationDisplay != null ? durationDisplay : '—'}
+            sub={durationDisplay != null ? 'min' : undefined}
             icon={<Clock className="w-5 h-5 text-text-secondary" />}
           />
         </div>

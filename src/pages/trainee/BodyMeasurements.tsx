@@ -1,15 +1,16 @@
 import React, { useState } from 'react'
-import { Plus, Edit2, Scale, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Edit2, Scale, ChevronDown, ChevronUp, Trash2 } from 'lucide-react'
 import { useAuth } from '../../lib/auth'
 import {
   useBodyMeasurements,
   useAddBodyMeasurement,
   useUpdateBodyMeasurement,
+  useDeleteBodyMeasurement,
 } from '../../lib/api/measurements'
 import { Card, CardHeader, CardTitle } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
-import { Sheet } from '../../components/ui/Modal'
+import { Sheet, Modal } from '../../components/ui/Modal'
 import { PageSpinner } from '../../components/ui/Spinner'
 import { EmptyState, ErrorState } from '../../components/ui/States'
 import { useToast } from '../../components/ui/Toast'
@@ -55,9 +56,11 @@ export function TraineeBodyMeasurementsPage() {
   const measurementsQ = useBodyMeasurements(user?.id)
   const addMeasurement = useAddBodyMeasurement()
   const updateMeasurement = useUpdateBodyMeasurement()
+  const deleteMeasurement = useDeleteBodyMeasurement(user?.id)
 
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<BodyMeasurement | null>(null)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [draft, setDraft] = useState<FormDraft>(blankDraft())
   const [saving, setSaving] = useState(false)
   const [dateInput, setDateInput] = useState(new Date().toISOString().split('T')[0])
@@ -100,6 +103,18 @@ export function TraineeBodyMeasurementsPage() {
       toast((e as Error).message ?? 'Failed to save', 'error')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!deleteConfirmId) return
+    try {
+      await deleteMeasurement.mutateAsync(deleteConfirmId)
+      toast('Measurement deleted.', 'success')
+    } catch (e) {
+      toast((e as Error).message ?? 'Failed to delete', 'error')
+    } finally {
+      setDeleteConfirmId(null)
     }
   }
 
@@ -146,10 +161,39 @@ export function TraineeBodyMeasurementsPage() {
               key={m.id}
               measurement={m}
               onEdit={() => openEditSheet(m)}
+              onDelete={() => setDeleteConfirmId(m.id)}
             />
           ))}
         </div>
       )}
+
+      {/* Delete confirm */}
+      <Modal
+        isOpen={deleteConfirmId != null}
+        onClose={() => setDeleteConfirmId(null)}
+        title="Delete measurement?"
+        size="sm"
+      >
+        <p className="text-sm text-text-secondary mb-4">
+          This measurement will be permanently removed and cannot be recovered.
+        </p>
+        <div className="flex gap-3 justify-end">
+          <Button
+            variant="secondary"
+            onClick={() => setDeleteConfirmId(null)}
+            disabled={deleteMeasurement.isPending}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            onClick={handleDelete}
+            isLoading={deleteMeasurement.isPending}
+          >
+            Delete
+          </Button>
+        </div>
+      </Modal>
 
       {/* Add / Edit sheet */}
       <Sheet
@@ -198,9 +242,11 @@ export function TraineeBodyMeasurementsPage() {
 function MeasurementCard({
   measurement: m,
   onEdit,
+  onDelete,
 }: {
   measurement: BodyMeasurement
   onEdit: () => void
+  onDelete: () => void
 }) {
   const [expanded, setExpanded] = useState(false)
 
@@ -230,13 +276,22 @@ function MeasurementCard({
                 day: 'numeric',
               })}
             </p>
-            <button
-              onClick={onEdit}
-              className="p-1 rounded-lg hover:bg-card-elevated text-text-tertiary hover:text-text transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
-              aria-label="Edit measurement"
-            >
-              <Edit2 className="w-3.5 h-3.5" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={onEdit}
+                className="p-1 rounded-lg hover:bg-card-elevated text-text-tertiary hover:text-text transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                aria-label="Edit measurement"
+              >
+                <Edit2 className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={onDelete}
+                className="p-1 rounded-lg hover:bg-card-elevated text-text-tertiary hover:text-error transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                aria-label="Delete measurement"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
 
           {/* Primary values */}

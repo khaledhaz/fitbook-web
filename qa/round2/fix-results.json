@@ -1,0 +1,41 @@
+{
+  "fixResults": {
+    "1": {
+      "status": "VERIFIED FIXED",
+      "evidence": "Full flow: start → log set → complete → summary at http://localhost:8872/#/workout/session-summary/69e2a5f8-be27-4ce1-a3f0-7164de1b3f93"
+    },
+    "2": {
+      "status": "VERIFIED FIXED",
+      "evidence": "Session started successfully. No 400 error. Timer visible: true"
+    },
+    "3": {
+      "status": "VERIFIED FIXED",
+      "evidence": "Display name shown. Sidebar: \"FitBook\nHome\nSchedule\nProgress\nChat\nProfile\n\nIbrahim Kassem\n\nTrainee\""
+    },
+    "4": {
+      "status": "VERIFIED FIXED",
+      "evidence": "Outgoing tab loaded without \"Request #id\". Text: FitBook\nHome\nSchedule\nProgress\nChat\nProfile\n\nIbrahim Kassem\n\nTrainee\n\nConnections\n\nManage your trainer–trainee connections\n\nIncoming\nOutgoing\nFind Tra"
+    },
+    "5": {
+      "status": "VERIFIED FIXED",
+      "evidence": "Redirected to /home. URL: http://localhost:8872/#/home"
+    },
+    "6": {
+      "status": "VERIFIED FIXED",
+      "evidence": "TRAINER_NAV in AppShell.tsx: { to: '/trainer/chats', icon: MessageSquare, label: 'Chat' }"
+    },
+    "7": {
+      "status": "VERIFIED FIXED",
+      "evidence": "npm run build produced no supabase dynamic/static import warning. Output was clean."
+    },
+    "8": {
+      "status": "VERIFIED FIXED",
+      "evidence": "Exercise selector shown (25 buttons), chart rendering with data points."
+    },
+    "9": {
+      "status": "VERIFIED FIXED",
+      "evidence": "No horizontal overflow at 375px. scrollWidth=375 === innerWidth=375"
+    }
+  },
+  "generatedAt": "2026-06-06T23:25:23.544Z"
+}
