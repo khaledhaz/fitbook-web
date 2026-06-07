@@ -35,8 +35,17 @@ interface RpcSet {
 
 interface RpcLog {
   session_id: string
-  date: string
+  /** The RPC returns the date as session_date (fallback completed_at). */
+  session_date?: string | null
+  completed_at?: string | null
+  date?: string | null
+  max_weight?: number | null
   sets: RpcSet[]
+}
+
+/** The RPC's per-log date lives in session_date / completed_at, not `date`. */
+function logDate(log: RpcLog): string | null {
+  return log.session_date ?? log.completed_at ?? log.date ?? null
 }
 
 interface RpcExercise {
@@ -358,7 +367,7 @@ function ExerciseProgressSection({
 
   // Build chart data: one point per session log — top-set weight and estimated 1RM
   const chartData = [...(activeEntry?.logs ?? [])]
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .sort((a, b) => new Date(logDate(a) ?? 0).getTime() - new Date(logDate(b) ?? 0).getTime())
     .map((log) => {
       const completedSets = (log.sets ?? []).filter(
         (s) => s.is_completed && s.weight != null && s.reps != null,
@@ -372,8 +381,9 @@ function ExerciseProgressSection({
         topSet?.weight != null && topSet?.reps != null
           ? epley1RM(topSet.weight, topSet.reps)
           : null
+      const d = logDate(log)
       return {
-        date: new Date(log.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+        date: d ? new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '—',
         maxWeight,
         est1RM,
       }
