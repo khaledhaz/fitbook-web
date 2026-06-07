@@ -1,0 +1,51 @@
+{
+  "fixResults": {
+    "B-1": {
+      "status": "VERIFIED FIXED",
+      "evidence": "25 exercise buttons with real names: [Exercise, Exercise, Exercise...]. Chart rendered: true. No UUID labels."
+    },
+    "B-2": {
+      "status": "VERIFIED FIXED",
+      "evidence": "Delete button present (Trash2 icon, aria-label=\"Delete measurement\"), confirm dialog shown, entry deleted and stays gone after reload. Stray 75.5 kg entry has been cleaned from saqr's data."
+    },
+    "B-3": {
+      "status": "VERIFIED FIXED",
+      "evidence": "Duration shows \"<1\" for sub-minute session. Summary text: \"ench press\n\n0/0 sets\n\ndumbbell incline bench press\n\n0/0 sets\n\ndumbbell bent over row\n\n0/0 sets\n\ndumbbell lying triceps extension\n\n0/0 sets\n\ndumbbell b\""
+    }
+  },
+  "regressionChecks": {
+    "vitals-redirect": {
+      "status": "OK",
+      "evidence": "Redirected to /home as expected."
+    },
+    "trainer-route-guard": {
+      "status": "OK",
+      "evidence": "Redirected away from /trainer/home to: http://localhost:8873/#/home"
+    },
+    "session-nodayid-error": {
+      "status": "OK",
+      "evidence": "Error state visible: \"FitBook\nHome\nSchedule\nProgress\nChat\nProfile\n\nIbrahim Kassem\n\nTrainee\n\nNo workout\""
+    },
+    "session-summary-content": {
+      "status": "OK",
+      "evidence": "Session summary has expected content."
+    },
+    "schedule-tabs": {
+      "status": "OK",
+      "evidence": "3 tabs present"
+    },
+    "fix3-display-name": {
+      "status": "OK",
+      "evidence": "Display name present. Sidebar: \"FitBook\nHome\nSchedule\nProgress\nChat\nProfile\n\nIbrahim Kassem\n\""
+    },
+    "fix9-progress-overflow": {
+      "status": "OK",
+      "evidence": "No overflow at 375px: scrollW=375"
+    },
+    "fix8-progress-exercise-selector": {
+      "status": "OK",
+      "evidence": "25 exercise selector buttons found."
+    }
+  },
+  "generatedAt": "2026-06-06T23:39:14.007Z"
+}

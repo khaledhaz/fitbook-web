@@ -43,6 +43,8 @@ interface RpcExercise {
   exercise_id?: string | null
   custom_name?: string | null
   name?: string | null
+  /** The RPC returns the resolved library name here. */
+  exercise_name?: string | null
   logs: RpcLog[]
 }
 
@@ -264,10 +266,11 @@ function flattenExercises(
   const map = new Map<string, ExerciseProgressEntry>()
   for (const day of rawData.days) {
     for (const ex of day.exercises ?? []) {
-      const key = ex.exercise_id ?? ex.custom_name ?? ex.name ?? 'unknown'
-      // Priority: custom_name → RPC name → resolved exercises table name → friendly fallback
+      const key = ex.exercise_id ?? ex.custom_name ?? ex.exercise_name ?? ex.name ?? 'unknown'
+      // Priority: custom_name → RPC's resolved exercise_name → RPC name → resolved exercises table name → friendly fallback
       const name =
         ex.custom_name ??
+        ex.exercise_name ??
         (ex.name && ex.name !== ex.exercise_id ? ex.name : null) ??
         (ex.exercise_id ? nameMap.get(ex.exercise_id) : undefined) ??
         'Exercise'
